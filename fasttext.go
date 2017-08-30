@@ -12,7 +12,7 @@ import (
 
 // LoadModel - load FastText model
 func LoadModel(path string) {
-	C.load_model(C.CString("fasttext_search_category.clf.CLF.bin"))
+	C.load_model(C.CString(path))
 }
 
 // Predict - predict
