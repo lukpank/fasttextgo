@@ -1,6 +1,6 @@
 package fasttextgo
 
-// #cgo LDFLAGS: -L${SRCDIR} -lfasttext -lstdc++
+// #cgo LDFLAGS: -L${SRCDIR} -lfasttext -lstdc++ -lm
 // #include <stdlib.h>
 // void load_model(char *path);
 // int predict(char *query, float *prob, char *buf, int buf_sz);
