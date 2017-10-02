@@ -45,4 +45,34 @@ int predict(char *query, float *prob, char **buf, int *size) {
   return 1;
 }
 
+int predict_k(char *query, int k, float *prob, char **buf, int *sizes) {
+  membuf sbuf(query, query + strlen(query));
+  std::istream in(&sbuf);
+
+  std::vector<std::pair<fasttext::real, std::string>> predictions;
+
+  g_fasttext_model.predict(in, k, predictions);
+
+  std::vector<std::string> labels;
+  size_t size = 0;
+  int n = 0;
+  for (auto it = predictions.cbegin(); it != predictions.cend(); it++) {
+    prob[n] = (float)it->first;
+    sizes[n++] = it->second.size();
+    size += it->second.size();
+    labels.push_back(it->second);
+  }
+  *buf = (char *)malloc(size);
+  if (*buf == NULL) {
+    return -1;
+  }
+  char *p = *buf;
+  for (int i = 0; i < n; i++) {
+    memcpy(p, labels[i].c_str(), sizes[i]);
+    p += sizes[i];
+  }
+  return n;
+}
+
+
 }
