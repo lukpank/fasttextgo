@@ -22,6 +22,9 @@ func Predict(sentence string) (prob float32, label string, err error) {
 	var buf *C.char
 	buf = (*C.char)(C.calloc(64, 1))
 
+	if sentence != "" && sentence[len(sentence)-1] != '\n' {
+		sentence += "\n"
+	}
 	cs := C.CString(sentence)
 	ret := C.predict(cs, &cprob, buf, 64)
 	C.free(unsafe.Pointer(cs))
