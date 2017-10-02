@@ -24,7 +24,7 @@ void load_model(char *path) {
   }
 }
 
-int predict(char *query, float *prob, char *buf, int buf_sz) {
+int predict(char *query, float *prob, char **buf) {
   membuf sbuf(query, query + strlen(query));
   std::istream in(&sbuf);
 
@@ -34,9 +34,10 @@ int predict(char *query, float *prob, char *buf, int buf_sz) {
 
   for (auto it = predictions.cbegin(); it != predictions.cend(); it++) {
     *prob = (float)it->first;
-    strncpy(buf, it->second.c_str(), buf_sz);
+    *buf = strdup(it->second.c_str());
+    return 0;
   }
-  return 0;
+  return 1;
 }
 
 }
