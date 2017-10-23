@@ -4,6 +4,8 @@
 #include "real.h"
 #include <streambuf>
 #include <string.h>
+#include "args.h"
+#include "fasttext_wrapper.h"
 
 extern "C" {
 
@@ -74,5 +76,91 @@ int predict_k(char *query, int k, float *prob, char **buf, int *sizes) {
   return n;
 }
 
+void *fasttext_new() {
+  return new fasttext::FastText();
+}
+
+void fasttext_delete(void *p) {
+  delete ((fasttext::FastText*) p);
+}
+
+char *fasttext_train(void *p, fasttext_args *args) {
+  fasttext::FastText *ft = (fasttext::FastText*) p;
+  std::shared_ptr<fasttext::Args> a = std::make_shared<fasttext::Args>();
+  a->input = args->input;
+  a->output = args->output;
+  if (args->lr != -1) {
+    a->lr = args->lr;
+  }
+  if (args->lrUpdateRate != -1) {
+    a->lrUpdateRate = args->lrUpdateRate;
+  }
+  if (args->dim != -1 ) {
+    a->dim = args->dim;
+  }
+  if (args->ws != -1) {
+    a->ws = args->ws;
+  }
+  if (args->epoch != -1) {
+    a->epoch = args->epoch;
+  }
+  if (args->minCount != -1) {
+    a->minCount = args->minCount;
+  }
+  if (args->minCountLabel != -1) {
+    a->minCountLabel = args->minCountLabel;
+  }
+  if (args->neg != -1) {
+    a->neg = args->neg;
+  }
+  if (args->wordNgrams != -1) {
+    a->wordNgrams = args->wordNgrams;
+  }
+  if (args->loss != NULL) {
+    if (strcmp(args->loss, "hs") == 0) {
+      a->loss = fasttext::loss_name::hs;
+    } else if (strcmp(args->loss, "ns") == 0) {
+      a->loss = fasttext::loss_name::ns;
+    } else if (strcmp(args->loss, "softmax") == 0) {
+      a->loss = fasttext::loss_name::softmax;
+    } else {
+      return strdup("unrecognized loss value");
+    }
+  }
+  if (args->model != NULL) {
+    if (strcmp(args->model, "cbow") == 0) {
+      a->model = fasttext::model_name::cbow;
+    } else if (strcmp(args->model, "sg") == 0) {
+      a->model = fasttext::model_name::sg;
+    } else if (strcmp(args->model, "sup") == 0) {
+      a->model = fasttext::model_name::sup;
+    } else {
+      return strdup("unrecognized model value");
+    }
+  }
+  if (args->bucket != -1) {
+    a->bucket = args->bucket;
+  }
+  if (args->minn != -1) {
+    a->minn = args->minn;
+  }
+  if (args->maxn != -1) {
+    a->maxn = args->maxn;
+  }
+  if (args->thread != -1) {
+    a->thread = args->thread;
+  }
+  if (args->t != -1) {
+    a->t = args->t;
+  }
+  if (args->label != "") {
+    a->label = args->label;
+  }
+  if (args->verbose != -1) {
+    a->verbose = args->verbose;
+  }
+  ft->train(a);
+  return NULL;
+}
 
 }
