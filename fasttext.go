@@ -3,9 +3,6 @@ package fasttextgo
 // #cgo LDFLAGS: -L${SRCDIR} -lfasttext -lstdc++ -lm
 // #include <stdlib.h>
 // #include "src/fasttext_wrapper.h"
-// void load_model(char *path);
-// int predict(char *query, float *prob, char **buf, int *size);
-// int predict_k(char *query, int k, float *prob, char **buf, int *sizes);
 import "C"
 import (
 	"errors"
@@ -19,16 +16,32 @@ func LoadModel(path string) {
 
 // Predict - predict
 func Predict(sentence string) (prob float32, label string, err error) {
+	var ft *FastText
+	return ft.predict(sentence)
+}
 
+// Predict - predict
+func (f *FastText) Predict(sentence string) (prob float32, label string, err error) {
+	if f.ft == nil {
+		return 0, "", errors.New("Predict called on closed FastText")
+	}
+	return f.predict(sentence)
+}
+
+func (f *FastText) predict(sentence string) (prob float32, label string, err error) {
 	var cprob C.float
 	var buf *C.char
 	var size C.int
+	var ft unsafe.Pointer
 
+	if f != nil {
+		ft = f.ft
+	}
 	if sentence != "" && sentence[len(sentence)-1] != '\n' {
 		sentence += "\n"
 	}
 	cs := C.CString(sentence)
-	ret := C.predict(cs, &cprob, &buf, &size)
+	ret := C.fasttext_predict(ft, cs, &cprob, &buf, &size)
 	C.free(unsafe.Pointer(cs))
 
 	if ret != 0 {
@@ -50,17 +63,35 @@ type Prediction struct {
 
 // PredictK returns K top predictions
 func PredictK(sentence string, k int) ([]Prediction, error) {
+	var ft *FastText
+	return ft.predictK(sentence, k)
+}
+
+// PredictK returns K top predictions
+func (f *FastText) PredictK(sentence string, k int) ([]Prediction, error) {
+	if f.ft == nil {
+		return nil, errors.New("PredictK called on closed FastText")
+	}
+	return f.predictK(sentence, k)
+}
+
+// predictK returns K top predictions
+func (f *FastText) predictK(sentence string, k int) ([]Prediction, error) {
 	var cprob *C.float
 	cprob = (*C.float)(C.calloc(C.size_t(k), C.sizeof_float))
 	var csizes *C.int
 	csizes = (*C.int)(C.calloc(C.size_t(k), C.sizeof_int))
 	var buf *C.char
+	var ft unsafe.Pointer
 
+	if f != nil {
+		ft = f.ft
+	}
 	if sentence != "" && sentence[len(sentence)-1] != '\n' {
 		sentence += "\n"
 	}
 	cs := C.CString(sentence)
-	ret := C.predict_k(cs, C.int(k), cprob, &buf, csizes)
+	ret := C.fasttext_predict_k(ft, cs, C.int(k), cprob, &buf, csizes)
 	C.free(unsafe.Pointer(cs))
 
 	if ret == -1 {
@@ -172,5 +203,16 @@ func (f *FastText) train(input string, output string, model string, args *Args) 
 		defer C.free(unsafe.Pointer(e))
 		return errors.New(C.GoString(e))
 	}
+	return nil
+}
+
+// LoadModel - load FastText model
+func (f *FastText) LoadModel(path string) error {
+	if f.ft == nil {
+		return errors.New("LoadModel called on closed FastText")
+	}
+	cPath := C.CString(path)
+	C.fasttext_load_model(f.ft, cPath)
+	C.free(unsafe.Pointer(cPath))
 	return nil
 }

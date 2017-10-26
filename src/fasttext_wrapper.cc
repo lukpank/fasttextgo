@@ -26,13 +26,18 @@ void load_model(char *path) {
   }
 }
 
-int predict(char *query, float *prob, char **buf, int *size) {
+int fasttext_predict(void *ft_, char *query, float *prob, char **buf, int *size) {
+  fasttext::FastText *ft = (fasttext::FastText*) ft_;
+  if (ft == NULL) {
+    ft = &g_fasttext_model;
+  }
+
   membuf sbuf(query, query + strlen(query));
   std::istream in(&sbuf);
 
   std::vector<std::pair<fasttext::real, std::string>> predictions;
 
-  g_fasttext_model.predict(in, 1, predictions);
+  ft->predict(in, 1, predictions);
 
   for (auto it = predictions.cbegin(); it != predictions.cend(); it++) {
     *prob = (float)it->first;
@@ -47,13 +52,18 @@ int predict(char *query, float *prob, char **buf, int *size) {
   return 1;
 }
 
-int predict_k(char *query, int k, float *prob, char **buf, int *sizes) {
+int fasttext_predict_k(void *ft_, char *query, int k, float *prob, char **buf, int *sizes) {
+  fasttext::FastText *ft = (fasttext::FastText*) ft_;
+  if (ft == NULL) {
+    ft = &g_fasttext_model;
+  }
+
   membuf sbuf(query, query + strlen(query));
   std::istream in(&sbuf);
 
   std::vector<std::pair<fasttext::real, std::string>> predictions;
 
-  g_fasttext_model.predict(in, k, predictions);
+  ft->predict(in, k, predictions);
 
   std::vector<std::string> labels;
   size_t size = 0;
@@ -161,6 +171,11 @@ char *fasttext_train(void *p, fasttext_args *args) {
   }
   ft->train(a);
   return NULL;
+}
+
+void fasttext_load_model(void *p, char *path) {
+  fasttext::FastText *ft = (fasttext::FastText*) p;
+  ft->loadModel(std::string(path));
 }
 
 }
