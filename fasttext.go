@@ -1,6 +1,7 @@
 package fasttextgo
 
-// #cgo LDFLAGS: -L${SRCDIR} -lfasttext -lstdc++ -lm
+// #cgo CXXFLAGS: -O3 -funroll-loops
+// #cgo LDFLAGS: -lstdc++ -lm
 // #include <stdlib.h>
 // #include "src/fasttext_wrapper.h"
 import "C"
